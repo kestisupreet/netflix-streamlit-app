@@ -6,9 +6,15 @@ import pickle
 # ===============================
 # LOAD MODELS
 # ===============================
-model = pickle.load(open("models/netflix_best_model.pkl", "rb"))
-scaler = pickle.load(open("models/netflix_scaler.pkl", "rb"))
-encoders = pickle.load(open("models/netflix_encoders.pkl", "rb"))
+import os
+
+BASE_DIR = os.path.dirname(__file__)
+
+model = pickle.load(open(os.path.join(BASE_DIR, "models/netflix_best_model.pkl"), "rb"))
+scaler = pickle.load(open(os.path.join(BASE_DIR, "models/netflix_scaler.pkl"), "rb"))
+encoders = pickle.load(open(os.path.join(BASE_DIR, "models/netflix_encoders.pkl"), "rb"))
+
+df = pd.read_csv(os.path.join(BASE_DIR, "netflix_users.csv"))
 
 st.title("🎬 Netflix User Prediction Dashboard")
 
