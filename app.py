@@ -3,6 +3,16 @@ import pandas as pd
 import numpy as np
 import pickle
 
+import gdown
+import os
+
+MODEL_PATH = "models/netflix_best_model.pkl"
+
+if not os.path.exists(MODEL_PATH):
+    url = "https://drive.google.com/uc?id=1AbCXYZ123"
+    gdown.download(url, MODEL_PATH, quiet=False)
+
+
 # ===============================
 # LOAD MODELS
 # ===============================
