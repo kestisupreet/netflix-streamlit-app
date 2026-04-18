@@ -11,7 +11,11 @@ MODEL_PATH = "models/netflix_best_model.pkl"
 if not os.path.exists(MODEL_PATH):
     url = "https://drive.google.com/uc?id=1AbCXYZ123"
     gdown.download(url, MODEL_PATH, quiet=False)
+import requests
 
+url = "https://drive.google.com/file/d/1bHgNdX2Ha_71SvZuMorCsJhluc9BOX9w/view?usp=drive_link"
+with open("model.pkl", "wb") as f:
+    f.write(requests.get(url).content)
 
 # ===============================
 # LOAD MODELS
@@ -88,15 +92,68 @@ if st.button("Predict Subscription Type"):
     st.success(f"Predicted Subscription: {result[0]}")
 
 # ===============================
-# DATA VISUALIZATION
+# DASHBOARD VISUALIZATION 
 # ===============================
-st.subheader("📊 Dataset Overview")
+import plotly.express as px
 
-df = pd.read_csv("netflix_users.csv")
-st.write(df.head())
+st.markdown("---")
+st.header("📊 Netflix Analytics Dashboard")
 
-st.subheader("📈 Users by Country")
-st.bar_chart(df['Country'].value_counts())
+# ===============================
+# KPI CARDS
+# ===============================
+col1, col2, col3 = st.columns(3)
 
-st.subheader("🎭 Favorite Genres")
-st.bar_chart(df['Favorite_Genre'].value_counts())
+col1.metric("Total Users", len(df))
+col2.metric("Avg Watch Time", round(df['Watch_Time_Hours'].mean(), 2))
+col3.metric("Top Country", df['Country'].mode()[0])
+
+st.markdown("---")
+
+# ===============================
+# ROW 1
+# ===============================
+col1, col2 = st.columns(2)
+
+with col1:
+    sub_counts = df['Subscription_Type'].value_counts().reset_index()
+    fig1 = px.bar(sub_counts, x='Subscription_Type', y='count',
+                  title="Subscription Distribution")
+    st.plotly_chart(fig1, use_container_width=True)
+
+with col2:
+    genre_counts = df['Favorite_Genre'].value_counts().reset_index()
+    fig2 = px.pie(genre_counts, names='Favorite_Genre', values='count',
+                  title="Genre Popularity")
+    st.plotly_chart(fig2, use_container_width=True)
+
+# ===============================
+# ROW 2
+# ===============================
+col3, col4 = st.columns(2)
+
+with col3:
+    fig3 = px.box(df, x='Subscription_Type', y='Watch_Time_Hours',
+                  title="Watch Time by Subscription")
+    st.plotly_chart(fig3, use_container_width=True)
+
+with col4:
+    # Create Age Group if not exists
+    if 'Age_Group' not in df.columns:
+        bins = [0, 18, 25, 35, 50, 100]
+        labels = ['Teen', 'Young Adult', 'Adult', 'Mid Age', 'Senior']
+        df['Age_Group'] = pd.cut(df['Age'], bins=bins, labels=labels)
+
+    age_grp = df.groupby('Age_Group')['Watch_Time_Hours'].mean().reset_index()
+    fig4 = px.bar(age_grp, x='Age_Group', y='Watch_Time_Hours',
+                  title="Avg Watch Time by Age Group")
+    st.plotly_chart(fig4, use_container_width=True)
+
+# ===============================
+# ROW 3
+# ===============================
+top_countries = df['Country'].value_counts().head(10).reset_index()
+
+fig5 = px.bar(top_countries, x='Country', y='count',
+              title="Top 10 Countries")
+st.plotly_chart(fig5, use_container_width=True)
