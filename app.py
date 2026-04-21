@@ -91,21 +91,132 @@ if st.button("Predict"):
     st.success(f"Predicted: {result[0]}")
 
 # ===============================
-# DASHBOARD
+# 🎨 POWER BI STYLE UI
 # ===============================
 import plotly.express as px
 
-st.header("📊 Analytics")
+st.set_page_config(layout="wide")
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Users", len(df))
-col2.metric("Avg Watch Time", round(df['Watch_Time_Hours'].mean(), 2))
-col3.metric("Top Country", df['Country'].mode()[0])
+# ===============================
+# HEADER
+# ===============================
+st.markdown("""
+    <h1 style='text-align: center; color: #E50914;'>
+        🎬 Netflix Analytics Dashboard
+    </h1>
+""", unsafe_allow_html=True)
 
-# Charts
-fig1 = px.bar(df['Subscription_Type'].value_counts().reset_index(),
-              x='Subscription_Type', y='count')
-st.plotly_chart(fig1)
+st.markdown("---")
 
-fig2 = px.pie(df, names='Favorite_Genre')
-st.plotly_chart(fig2)
+# ===============================
+# SIDEBAR FILTERS
+# ===============================
+st.sidebar.header("🔍 Filters")
+
+selected_country = st.sidebar.multiselect(
+    "Select Country",
+    options=df['Country'].unique(),
+    default=df['Country'].unique()
+)
+
+selected_subscription = st.sidebar.multiselect(
+    "Subscription Type",
+    options=df['Subscription_Type'].unique(),
+    default=df['Subscription_Type'].unique()
+)
+
+# Filter data
+filtered_df = df[
+    (df['Country'].isin(selected_country)) &
+    (df['Subscription_Type'].isin(selected_subscription))
+]
+
+# ===============================
+# KPI CARDS
+# ===============================
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("👥 Total Users", len(filtered_df))
+col2.metric("⏱ Avg Watch Time", round(filtered_df['Watch_Time_Hours'].mean(), 2))
+col3.metric("🌍 Countries", filtered_df['Country'].nunique())
+col4.metric("🎭 Genres", filtered_df['Favorite_Genre'].nunique())
+
+st.markdown("---")
+
+# ===============================
+# ROW 1
+# ===============================
+col1, col2 = st.columns(2)
+
+with col1:
+    sub_counts = filtered_df['Subscription_Type'].value_counts().reset_index()
+    sub_counts.columns = ['Subscription_Type', 'count']
+
+    fig1 = px.bar(
+        sub_counts,
+        x='Subscription_Type',
+        y='count',
+        color='Subscription_Type',
+        title="Subscription Distribution"
+    )
+    st.plotly_chart(fig1, use_container_width=True)
+
+with col2:
+    genre_counts = filtered_df['Favorite_Genre'].value_counts().reset_index()
+    genre_counts.columns = ['Genre', 'count']
+
+    fig2 = px.pie(
+        genre_counts,
+        names='Genre',
+        values='count',
+        title="Genre Popularity"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
+
+# ===============================
+# ROW 2
+# ===============================
+col3, col4 = st.columns(2)
+
+with col3:
+    fig3 = px.box(
+        filtered_df,
+        x='Subscription_Type',
+        y='Watch_Time_Hours',
+        color='Subscription_Type',
+        title="Watch Time by Subscription"
+    )
+    st.plotly_chart(fig3, use_container_width=True)
+
+with col4:
+    if 'Age_Group' not in filtered_df.columns:
+        bins = [0, 18, 25, 35, 50, 100]
+        labels = ['Teen', 'Young Adult', 'Adult', 'Mid Age', 'Senior']
+        filtered_df['Age_Group'] = pd.cut(filtered_df['Age'], bins=bins, labels=labels)
+
+    age_grp = filtered_df.groupby('Age_Group')['Watch_Time_Hours'].mean().reset_index()
+
+    fig4 = px.bar(
+        age_grp,
+        x='Age_Group',
+        y='Watch_Time_Hours',
+        color='Age_Group',
+        title="Avg Watch Time by Age Group"
+    )
+    st.plotly_chart(fig4, use_container_width=True)
+
+# ===============================
+# ROW 3
+# ===============================
+top_countries = filtered_df['Country'].value_counts().head(10).reset_index()
+top_countries.columns = ['Country', 'count']
+
+fig5 = px.bar(
+    top_countries,
+    x='Country',
+    y='count',
+    color='Country',
+    title="Top 10 Countries"
+)
+
+st.plotly_chart(fig5, use_container_width=True)
