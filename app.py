@@ -9,28 +9,60 @@ import os
 MODEL_PATH = "models/netflix_best_model.pkl"
 
 if not os.path.exists(MODEL_PATH):
-    url = "https://drive.google.com/uc?id=1AbCXYZ123"
+    url = "https://drive.google.com/file/d/1bHgNdX2Ha_71SvZuMorCsJhluc9BOX9w"
     gdown.download(url, MODEL_PATH, quiet=False)
-import requests
 
-url = "https://drive.google.com/file/d/1bHgNdX2Ha_71SvZuMorCsJhluc9BOX9w/view?usp=drive_link"
-with open("model.pkl", "wb") as f:
-    f.write(requests.get(url).content)
+import gdown
+import os
+import pickle
 
+# Create models folder
+os.makedirs("models", exist_ok=True)
+
+MODEL_PATH = "models/netflix_best_model.pkl"
+
+# Correct Google Drive direct download link
+MODEL_URL = "https://drive.google.com/file/d/1bHgNdX2Ha_71SvZuMorCsJhluc9BOX9w"
+
+# Download model if not present
+if not os.path.exists(MODEL_PATH):
+    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+
+# Load files (NO BASE_DIR)
+model = pickle.load(open(MODEL_PATH, "rb"))
+scaler = pickle.load(open("models/netflix_scaler.pkl", "rb"))
+encoders = pickle.load(open("models/netflix_encoders.pkl", "rb"))
+
+# Load dataset
+df = pd.read_csv("netflix_users.csv")
 # ===============================
 # LOAD MODELS
 # ===============================
+import streamlit as st
+import pandas as pd
+import numpy as np
+import pickle
+import gdown
 import os
 
-BASE_DIR = os.path.dirname(__file__)
+# Create models folder
+os.makedirs("models", exist_ok=True)
 
-model = pickle.load(open(os.path.join(BASE_DIR, "models/netflix_best_model.pkl"), "rb"))
-scaler = pickle.load(open(os.path.join(BASE_DIR, "models/netflix_scaler.pkl"), "rb"))
-encoders = pickle.load(open(os.path.join(BASE_DIR, "models/netflix_encoders.pkl"), "rb"))
+# Google Drive FILE ID (IMPORTANT)
+MODEL_URL = "https://drive.google.com/uc?id=1bHgNdX2Ha_71SvZuMorCsJhluc9BOX9w"
+MODEL_PATH = "models/netflix_best_model.pkl"
 
-df = pd.read_csv(os.path.join(BASE_DIR, "netflix_users.csv"))
+# Download model if not exists
+if not os.path.exists(MODEL_PATH):
+    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
-st.title("🎬 Netflix User Prediction Dashboard")
+# Load files
+model = pickle.load(open(MODEL_PATH, "rb"))
+scaler = pickle.load(open("models/netflix_scaler.pkl", "rb"))
+encoders = pickle.load(open("models/netflix_encoders.pkl", "rb"))
+
+# Load dataset
+df = pd.read_csv("netflix_users.csv")
 
 # ===============================
 # SIDEBAR INPUT
@@ -117,8 +149,10 @@ col1, col2 = st.columns(2)
 
 with col1:
     sub_counts = df['Subscription_Type'].value_counts().reset_index()
+    sub_counts.columns = ['Subscription_Type', 'count']
+
     fig1 = px.bar(sub_counts, x='Subscription_Type', y='count',
-                  title="Subscription Distribution")
+              title="Subscription Distribution")
     st.plotly_chart(fig1, use_container_width=True)
 
 with col2:
@@ -153,6 +187,7 @@ with col4:
 # ROW 3
 # ===============================
 top_countries = df['Country'].value_counts().head(10).reset_index()
+top_countries.columns = ['Country', 'count']
 
 fig5 = px.bar(top_countries, x='Country', y='count',
               title="Top 10 Countries")

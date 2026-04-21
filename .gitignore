@@ -2,3 +2,5 @@ models/*.pkl
 .DS_Storemodels/*.pkl
 models/
 *.pkl
+models/*.pkl
+model.pkl
